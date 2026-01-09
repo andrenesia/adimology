@@ -119,15 +119,31 @@ export async function getWatchlistAnalysisHistory(filters?: {
   status?: string;
   limit?: number;
   offset?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }) {
   let query = supabase
     .from('stock_queries')
-    .select('*', { count: 'exact' })
-    .order('from_date', { ascending: false })
-    .order('emiten', { ascending: true });
+    .select('*', { count: 'exact' });
+
+  // Handle sorting
+  const sortBy = filters?.sortBy || 'from_date';
+  const sortOrder = filters?.sortOrder || 'desc';
+
+  if (sortBy === 'combined') {
+    // Sort by date then emiten
+    query = query
+      .order('from_date', { ascending: sortOrder === 'asc' })
+      .order('emiten', { ascending: sortOrder === 'asc' });
+  } else {
+    query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+  }
 
   if (filters?.emiten) {
-    query = query.eq('emiten', filters.emiten);
+    const emitenList = filters.emiten.split(/\s+/).filter(Boolean);
+    if (emitenList.length > 0) { // Changed to always use .in() if emitens are present
+      query = query.in('emiten', emitenList);
+    }
   }
   if (filters?.fromDate) {
     query = query.gte('from_date', filters.fromDate);

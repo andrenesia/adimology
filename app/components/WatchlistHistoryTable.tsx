@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { exportHistoryToPDF } from '@/lib/pdfExport';
 
 interface AnalysisRecord {
   id: number;
@@ -29,11 +30,12 @@ export default function WatchlistHistoryTable() {
   });
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(0);
+  const [sort, setSort] = useState({ column: 'from_date', direction: 'desc' });
   const pageSize = 50;
 
   useEffect(() => {
     fetchHistory();
-  }, [filters, page]);
+  }, [filters, page, sort]);
 
   // Debounced fetch for text inputs could be added, but manual trigger or loose effect is fine for now
   
@@ -49,6 +51,8 @@ export default function WatchlistHistoryTable() {
       if (filters.fromDate) params.append('fromDate', filters.fromDate);
       if (filters.toDate) params.append('toDate', filters.toDate);
       if (filters.status !== 'all') params.append('status', filters.status);
+      params.append('sortBy', sort.column);
+      params.append('sortOrder', sort.direction);
 
       const response = await fetch(`/api/watchlist-history?${params}`);
       const json = await response.json();
@@ -82,13 +86,28 @@ export default function WatchlistHistoryTable() {
     <div className="glass-card-static">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
         <h2>📊 Watchlist Analysis History</h2>
-        <button 
-          className="btn btn-primary" 
-          onClick={fetchHistory}
-          style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
-        >
-          Refresh
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button 
+            className="btn btn-primary" 
+            onClick={fetchHistory}
+            style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+          >
+            Refresh
+          </button>
+          <button 
+            className="btn btn-primary" 
+            onClick={() => exportHistoryToPDF(data, filters)}
+            style={{ 
+              padding: '0.5rem 1rem', 
+              fontSize: '0.8rem',
+              background: 'var(--gradient-success)',
+              boxShadow: '0 4px 15px rgba(56, 239, 125, 0.4)'
+            }}
+            disabled={data.length === 0}
+          >
+            📄 Export PDF
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -167,8 +186,24 @@ export default function WatchlistHistoryTable() {
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
               <thead style={{ background: 'var(--bg-secondary)' }}>
                 <tr>
-                  <th style={{ whiteSpace: 'nowrap', padding: '1rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Date</th>
-                  <th style={{ whiteSpace: 'nowrap', padding: '1rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Emiten</th>
+                  <th 
+                    style={{ whiteSpace: 'nowrap', padding: '1rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => {
+                      const direction = sort.column === 'from_date' && sort.direction === 'desc' ? 'asc' : 'desc';
+                      setSort({ column: 'from_date', direction });
+                    }}
+                  >
+                    Date {sort.column === 'from_date' ? (sort.direction === 'desc' ? '↓' : '↑') : ''}
+                  </th>
+                  <th 
+                    style={{ whiteSpace: 'nowrap', padding: '1rem', textAlign: 'left', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => {
+                      const direction = sort.column === 'emiten' && sort.direction === 'asc' ? 'desc' : 'asc';
+                      setSort({ column: 'emiten', direction });
+                    }}
+                  >
+                    Emiten {sort.column === 'emiten' ? (sort.direction === 'desc' ? '↓' : '↑') : ''}
+                  </th>
                   <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Harga</th>
                   <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Target R1</th>
                   <th style={{ padding: '1rem', textAlign: 'right', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: 600 }}>Target Max</th>

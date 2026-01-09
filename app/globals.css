@@ -813,8 +813,8 @@ h3 {
 .navbar-logo-icon {
   width: 42px;
   height: 42px;
-  background: var(--accent-primary);
-  border-radius: 0; /* Square as per request image */
+  color: var(--accent-primary);
+  background: transparent;
   flex-shrink: 0;
 }
 

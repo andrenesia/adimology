@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
       status: searchParams.get('status') || undefined,
       limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 50,
       offset: searchParams.get('offset') ? parseInt(searchParams.get('offset')!) : 0,
+      sortBy: searchParams.get('sortBy') || undefined,
+      sortOrder: (searchParams.get('sortOrder') as 'asc' | 'desc') || undefined,
     };
 
     const { data, count } = await getWatchlistAnalysisHistory(filters);
