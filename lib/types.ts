@@ -202,3 +202,46 @@ export interface KeyStatsData {
   profitability: KeyStatsItem[];
   growth: KeyStatsItem[];
 }
+
+// Agent Story Types
+export interface MatriksStoryItem {
+  kategori_story: string;
+  deskripsi_katalis: string;
+  logika_ekonomi_pasar: string;
+  potensi_dampak_harga: string;
+}
+
+export interface SwotAnalysis {
+  strengths: string[];
+  weaknesses: string[];
+  opportunities: string[];
+  threats: string[];
+}
+
+export interface ChecklistKatalis {
+  item: string;
+  dampak_instan: string;
+}
+
+export interface StrategiTrading {
+  tipe_saham: string;
+  target_entry: string;
+  exit_strategy: {
+    take_profit: string;
+    stop_loss: string;
+  };
+}
+
+export interface AgentStoryResult {
+  id?: number;
+  emiten: string;
+  status: 'pending' | 'processing' | 'completed' | 'error';
+  matriks_story?: MatriksStoryItem[];
+  swot_analysis?: SwotAnalysis;
+  checklist_katalis?: ChecklistKatalis[];
+  strategi_trading?: StrategiTrading;
+  kesimpulan?: string;
+  error_message?: string;
+  created_at?: string;
+}
+

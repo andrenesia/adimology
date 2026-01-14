@@ -234,3 +234,87 @@ export async function updatePreviousDayRealPrice(emiten: string, currentDate: st
 
   return data;
 }
+
+/**
+ * Create a new agent story record with pending status
+ */
+export async function createAgentStory(emiten: string) {
+  const { data, error } = await supabase
+    .from('agent_stories')
+    .insert({ emiten, status: 'pending' })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating agent story:', error);
+    throw error;
+  }
+
+  return data;
+}
+
+/**
+ * Update agent story with result or error
+ */
+export async function updateAgentStory(id: number, data: {
+  status: 'processing' | 'completed' | 'error';
+  matriks_story?: object[];
+  swot_analysis?: object;
+  checklist_katalis?: object[];
+  strategi_trading?: object;
+  kesimpulan?: string;
+  error_message?: string;
+}) {
+  const { data: result, error } = await supabase
+    .from('agent_stories')
+    .update(data)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating agent story:', error);
+    throw error;
+  }
+
+  return result;
+}
+
+/**
+ * Get latest agent story for an emiten
+ */
+export async function getAgentStoryByEmiten(emiten: string) {
+  const { data, error } = await supabase
+    .from('agent_stories')
+    .select('*')
+    .eq('emiten', emiten.toUpperCase())
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    console.error('Error fetching agent story:', error);
+  }
+
+  return data || null;
+}
+
+/**
+ * Get all agent stories for an emiten
+ */
+export async function getAgentStoriesByEmiten(emiten: string, limit: number = 20) {
+  const { data, error } = await supabase
+    .from('agent_stories')
+    .select('*')
+    .eq('emiten', emiten.toUpperCase())
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching agent stories:', error);
+    throw error;
+  }
+
+  return data || [];
+}
+

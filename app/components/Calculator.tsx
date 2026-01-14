@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import InputForm from './InputForm';
 import CompactResultCard from './CompactResultCard';
 import BrokerSummaryCard from './BrokerSummaryCard';
 import KeyStatsCard from './KeyStatsCard';
+import AgentStoryCard from './AgentStoryCard';
 import html2canvas from 'html2canvas';
-import type { StockInput, StockAnalysisResult, KeyStatsData } from '@/lib/types';
+import type { StockInput, StockAnalysisResult, KeyStatsData, AgentStoryResult } from '@/lib/types';
 import { getDefaultDate } from '@/lib/utils';
 
 interface CalculatorProps {
@@ -61,6 +62,11 @@ export default function Calculator({ selectedStock }: CalculatorProps) {
   const [copied, setCopied] = useState(false);
   const [copiedImage, setCopiedImage] = useState(false);
   const [keyStats, setKeyStats] = useState<KeyStatsData | null>(null);
+  
+  // Agent Story state
+  const [agentStories, setAgentStories] = useState<AgentStoryResult[]>([]);
+  const [storyStatus, setStoryStatus] = useState<'idle' | 'pending' | 'processing' | 'completed' | 'error'>('idle');
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Date state lifted from InputForm
   const [fromDate, setFromDate] = useState(getDefaultDate());
@@ -71,6 +77,12 @@ export default function Calculator({ selectedStock }: CalculatorProps) {
     if (selectedStock) {
       setResult(null);
       setError(null);
+      setAgentStories([]);
+      setStoryStatus('idle');
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
       // Auto-analyze with current selected dates
       // This allows clicking watchlist items to RESPECT the date range selected by user
       handleSubmit({
@@ -85,6 +97,13 @@ export default function Calculator({ selectedStock }: CalculatorProps) {
     setLoading(true);
     setError(null);
     setResult(null);
+    setAgentStories([]);
+    setStoryStatus('idle');
+    setKeyStats(null);
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
 
     try {
       const response = await fetch('/api/stock', {
@@ -113,6 +132,24 @@ export default function Calculator({ selectedStock }: CalculatorProps) {
       } catch (keyStatsErr) {
         console.error('Failed to fetch key stats:', keyStatsErr);
       }
+
+      // Fetch existing Agent Story if available
+      try {
+        const storyRes = await fetch(`/api/analyze-story?emiten=${data.emiten}`);
+        const storyJson = await storyRes.json();
+        if (storyJson.success && storyJson.data && Array.isArray(storyJson.data)) {
+          setAgentStories(storyJson.data);
+          const latestStory = storyJson.data[0];
+          if (latestStory.status === 'completed') {
+            setStoryStatus('completed');
+          } else if (latestStory.status === 'processing' || latestStory.status === 'pending') {
+            // Re-trigger polling if it was still in progress
+            handleAnalyzeStory(true);
+          }
+        }
+      } catch (storyErr) {
+        console.error('Failed to fetch existing agent story:', storyErr);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -123,6 +160,71 @@ export default function Calculator({ selectedStock }: CalculatorProps) {
   const handleDateChange = (newFrom: string, newTo: string) => {
     setFromDate(newFrom);
     setToDate(newTo);
+  };
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const handleAnalyzeStory = async (isResuming: boolean = false) => {
+    if (!result) return;
+    
+    const emiten = result.input.emiten.toUpperCase();
+    setStoryStatus('pending');
+    
+    if (!isResuming) {
+      // Don't clear existing stories when starting a new one, 
+      // just add a placeholder or let the API update handle it
+    }
+
+    try {
+      // Trigger background analysis
+      const response = await fetch('/api/analyze-story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ emiten })
+      });
+      
+      const data = await response.json();
+      if (!data.success) throw new Error(data.error);
+
+      // Start polling for status
+      pollIntervalRef.current = setInterval(async () => {
+        try {
+          const statusRes = await fetch(`/api/analyze-story?emiten=${emiten}`);
+          const statusData = await statusRes.json();
+          
+          if (statusData.success && statusData.data && Array.isArray(statusData.data)) {
+            const stories = statusData.data;
+            setAgentStories(stories);
+            
+            const currentProcessing = stories[0]; // The one we just triggered is usually the first (desc order)
+            if (currentProcessing.status === 'completed') {
+              setStoryStatus('completed');
+              if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+            } else if (currentProcessing.status === 'error') {
+              setStoryStatus('error');
+              if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+            } else if (currentProcessing.status === 'processing') {
+              setStoryStatus('processing');
+            }
+          }
+        } catch (pollErr) {
+          console.error('Polling error:', pollErr);
+        }
+      }, 5000);
+
+    } catch (err) {
+      console.error('Failed to start analysis:', err);
+      setStoryStatus('error');
+      // We don't necessarily want to setAgentStories to an error object if we have other stories
+      // But for the sake of showing error in the card, we might need a workaround or specific error state in card
+    }
   };
 
   const handleCopy = async () => {
@@ -308,6 +410,30 @@ export default function Calculator({ selectedStock }: CalculatorProps) {
                   )}
                 </button>
               </div>
+
+               {/* Analyze Story Button (Moved here) */}
+               <button 
+                  onClick={() => handleAnalyzeStory()}
+                  disabled={storyStatus === 'pending' || storyStatus === 'processing'}
+                  className="btn btn-primary"
+                  style={{
+                    width: '100%',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1rem',
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    background: 'linear-gradient(135deg, #6C63FF, #00C896)',
+                    border: 'none',
+                    boxShadow: '0 4px 15px rgba(108, 99, 255, 0.3)'
+                  }}
+                >
+                  {storyStatus === 'pending' || storyStatus === 'processing' 
+                    ? '⏳ Analyzing...' 
+                    : '🤖 Analyze Story (AI)'}
+                </button>
             </div>
 
             {/* Right Column: Broker Summary */}
@@ -327,6 +453,17 @@ export default function Calculator({ selectedStock }: CalculatorProps) {
                 keyStats={keyStats}
               />
             )}
+
+            {/* Agent Story Section - Full Width */}
+            <div style={{ gridColumn: '1 / -1', marginTop: '0', width: '100%' }}>
+              {(agentStories.length > 0 || storyStatus !== 'idle') && (
+                <AgentStoryCard 
+                  stories={agentStories} 
+                  status={storyStatus} 
+                  onRetry={() => handleAnalyzeStory()}
+                />
+              )}
+            </div>
           </div>
         </div>
       )}
