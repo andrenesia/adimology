@@ -1,60 +1,88 @@
 # Adimology - Kalkulator Target Saham 📈
 
-Adimology adalah aplikasi web sederhana yang dirancang untuk membantu investor saham, baik pemula maupun berpengalaman, dalam menganalisis target harga saham. Aplikasi ini menggunakan data transaksi broker (bandarmologi) dari Stockbit untuk menghitung potensi pergerakan harga saham.
+Adimology adalah aplikasi web canggih yang dirancang untuk membantu investor saham dalam menganalisis target harga saham berdasarkan data transaksi broker (bandarmologi) dari Stockbit.
+
+Aplikasi ini tidak hanya menghitung target harga, tetapi juga melacak performa analisis secara otomatis dan menyediakan wawasan mendalam tentang akumulasi broker.
 
 ## 🌟 Fitur Utama
 
-- **Analisis Target Cerdas**: Menghitung target harga "Realistis" dan "Maksimal" berdasarkan rata-rata harga pembelian broker.
-- **Data Terintegrasi Stockbit**: Mengambil data transaksi broker secara real-time dari Stockbit untuk akurasi analisis.
-- **Ringkasan Broker**: Menampilkan ringkasan akumulasi broker (Top 1, Top 3, dan Top 5) untuk melihat kekuatan pembeli vs penjual.
-- **Kalkulator Potensi**: Melihat persentase potensi keuntungan (upside) dan risiko (downside) dari harga pasar saat ini.
+- **Analisis Target Cerdas**: Menghitung target harga "Realistis (R1)" dan "Maksimal" berdasarkan rata-rata harga pembelian broker (Avg Bandar).
+- **History & Watchlist**: Menyimpan riwayat analisis untuk dipantau di kemudian hari.
+- **Tracking Real Harga (H+1)**: Secara otomatis memperbarui harga riil di hari bursa berikutnya untuk memverifikasi apakah target analisis tercapai.
+- **Data Terintegrasi Stockbit**: Mengambil data transaksi broker real-time untuk akurasi tinggi.
+- **Ringkasan Broker (Top 1, 3, 5)**: Visualisasi kekuatan akumulasi vs distribusi broker.
+- **Export to PDF**: Unduh laporan riwayat analisis dalam format PDF yang rapi.
+- **Automatic Background Analysis**: Fitur otomatisasi yang melakukan analisis watchlist secara terjadwal setiap hari.
 
-## 🚀 Cara Menggunakan
+## �️ Tech Stack
 
-1. **Buka Aplikasi**: Jalankan aplikasi di browser Anda.
-2. **Masukkan Kode Saham**: Ketik kode saham yang ingin dianalisis (contoh: `BBCA`, `TLKM`, `GOTO`) pada kolom input.
-3. **Pilih Rentang Waktu** (Opsional): Jika tersedia, pilih rentang waktu analisis.
-4. **Klik Analyze**: Tekan tombol untuk memulai analisis.
-5. **Baca Hasil**:
-   - **Broker Summary**: Lihat siapa broker yang paling banyak membeli/menjual.
-   - **Result Table**: Bandingkan harga pasar saat ini dengan rata-rata harga broker.
-   - **Target Price**: Lihat prediksi harga target realistis dan maksimal.
+- **Frontend**: [Next.js 15 (App Router)](https://nextjs.org/), React 19, Tailwind CSS 4.
+- **Backend/Database**: [Supabase](https://supabase.com/) (PostgreSQL).
+- **Deployment**: [Netlify](https://www.netlify.com/) (dengan Netlify Functions & Scheduled Functions).
+- **Tools**: `jspdf` & `html2canvas` untuk ekspor PDF, `lucide-react` untuk ikon.
+
+## ⚙️ Instalasi Lokal
+
+Ikuti langkah-langkah berikut untuk menjalankan Adimology di mesin lokal Anda:
+
+1. **Clone Repository**:
+   ```bash
+   git clone https://github.com/username/adimology.git
+   cd adimology
+   ```
+
+2. **Install Dependensi**:
+   ```bash
+   npm install
+   ```
+
+3. **Konfigurasi Environment Variables**:
+   Salin `.env.local.example` menjadi `.env.local` dan isi nilainya:
+   ```bash
+   cp .env.local.example .env.local
+   ```
+   Isi variabel berikut:
+   - `NEXT_PUBLIC_SUPABASE_URL`: URL project Supabase Anda.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Anon key dari Supabase.
+   - `STOCKBIT_JWT_TOKEN`: Token JWT Stockbit (bisa didapat manual atau via ekstensi).
+   - `CRON_SECRET`: Secret key untuk mengamankan endpoint cron/scheduled functions.
+
+4. **Jalankan Aplikasi**:
+   ```bash
+   npm run dev
+   ```
+   Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
+
+## 🗄️ Setup Database Supabase
+
+Aplikasi ini membutuhkan beberapa tabel di Supabase. Jalankan script SQL yang ada di folder `supabase/` melalui SQL Editor di dashboard Supabase Anda dengan urutan berikut:
+
+1. `session_table.sql`: Menyimpan token sesi Stockbit.
+2. `stock_queries_table.sql`: Tabel utama riwayat analisis.
+3. `stock_queries_migration.sql`: Migrasi untuk penyesuaian struktur data.
+4. `add_sector_column.sql`: Menambahkan informasi sektor emiten.
+5. `add_real_harga_column.sql`: Menambahkan fitur tracking harga H+1.
+
+## 🌐 Deploy ke Netlify
+
+1. Hubungkan repository GitHub Anda ke Netlify.
+2. Tambahkan **Environment Variables** (sama dengan langkah instalasi lokal) di dashboard Netlify.
+3. Gunakan `netlify.toml` yang sudah tersedia untuk konfigurasi build otomatis.
+4. Fitur **Scheduled Functions** akan otomatis berjalan berdasarkan jadwal yang ditentukan (default: setiap hari bursa jam 11:00 UTC).
+
+## 🔌 Ekstensi Chrome (Stockbit Token Syncer)
+
+Agar aplikasi dapat mengambil data terbaru dari Stockbit tanpa input token manual terus-menerus, gunakan ekstensi yang tersedia di folder `stockbit-token-extension/`:
+
+1. Buka `chrome://extensions/` di Chrome.
+2. Aktifkan **Developer mode** di pojok kanan atas.
+3. Klik **Load unpacked** dan pilih folder `stockbit-token-extension`.
+4. Sesuaikan URL endpoint di `background.js` agar mengarah ke domain aplikasi Anda.
+5. Ekstensi akan otomatis menangkap token saat Anda membuka Stockbit dan mengirimkannya ke database Supabase Anda.
+
+## 📄 Lisensi
+
+Proyek ini dibuat untuk tujuan edukasi dan penggunaan pribadi. Pastikan untuk mematuhi ketentuan penggunaan layanan pihak ketiga yang digunakan.
 
 ---
-
-## 💻 Untuk Pengembang (Getting Started)
-
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-### Menjalankan Aplikasi Secara Lokal
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-### Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-### Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Dibuat dengan ❤️ oleh [Adimology Team]
