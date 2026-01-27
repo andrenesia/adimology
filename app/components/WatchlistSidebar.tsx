@@ -220,15 +220,15 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
             >
               <Filter size={14} />
             </button>
-            <span style={{
-              fontSize: '0.7rem',
-              color: 'var(--text-muted)',
-              background: 'rgba(255,255,255,0.1)',
-              padding: '2px 6px',
-              borderRadius: '4px'
-            }}>
-              {filteredWatchlist.length}
-            </span>
+              <span style={{
+                fontSize: '0.7rem',
+                color: 'var(--text-muted)',
+                background: 'var(--border-color)',
+                padding: '2px 6px',
+                borderRadius: '4px'
+              }}>
+                {filteredWatchlist.length}
+              </span>
           </div>
         </div>
 
@@ -241,8 +241,8 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
               width: '100%',
               padding: '0.5rem',
               fontSize: '0.8rem',
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-color)',
               borderRadius: '8px',
               color: 'var(--text-primary)',
               cursor: 'pointer',
@@ -251,7 +251,7 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
             }}
           >
             {groups.map(g => (
-              <option key={g.watchlist_id} value={g.watchlist_id} style={{ background: '#1a1a1a' }}>
+              <option key={g.watchlist_id} value={g.watchlist_id} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
                 {g.emoji ? `${g.emoji} ` : ''}{g.name}
               </option>
             ))}
@@ -266,9 +266,9 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
             flexDirection: 'column', 
             gap: '0.5rem',
             padding: '0.75rem',
-            background: 'rgba(255,255,255,0.03)',
+            background: 'var(--bg-card)',
             borderRadius: '10px',
-            border: '1px solid rgba(255,255,255,0.05)'
+            border: '1px solid var(--border-color)'
           }}>
             {/* Search Input */}
             <div style={{ position: 'relative' }}>
@@ -282,8 +282,8 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
                   width: '100%',
                   padding: '0.45rem 0.5rem 0.45rem 1.75rem',
                   fontSize: '0.8rem',
-                  background: 'rgba(255,255,255,0.05)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
                   borderRadius: '6px',
                   color: 'var(--text-primary)',
                   outline: 'none'
@@ -299,17 +299,17 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
                 width: '100%',
                 padding: '0.4rem',
                 fontSize: '0.75rem',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
                 borderRadius: '6px',
                 color: 'var(--text-primary)',
                 outline: 'none',
                 cursor: 'pointer'
               }}
             >
-              <option value="all" style={{ background: '#1a1a1f', color: '#fff' }}>All Sectors</option>
+              <option value="all" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>All Sectors</option>
               {availableSectors.map(s => (
-                <option key={s} value={s} style={{ background: '#1a1a1f', color: '#fff' }}>{s}</option>
+                <option key={s} value={s} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>{s}</option>
               ))}
             </select>
 
@@ -321,18 +321,18 @@ export default function WatchlistSidebar({ onSelect }: WatchlistSidebarProps) {
                 width: '100%',
                 padding: '0.4rem',
                 fontSize: '0.75rem',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
                 borderRadius: '6px',
                 color: 'var(--text-primary)',
                 outline: 'none',
                 cursor: 'pointer'
               }}
             >
-              <option value="all" style={{ background: '#1a1a1f', color: '#fff' }}>All Status</option>
-              <option value="OK" style={{ background: '#1a1a1f', color: '#3b82f6' }}>🔵 OK</option>
-              <option value="NG" style={{ background: '#1a1a1f', color: '#f97316' }}>🟠 NG</option>
-              <option value="Neutral" style={{ background: '#1a1a1f', color: '#a0a0b8' }}>⚪ Neutral</option>
+              <option value="all" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>All Status</option>
+              <option value="OK" style={{ background: 'var(--bg-secondary)', color: '#3b82f6' }}>🔵 OK</option>
+              <option value="NG" style={{ background: 'var(--bg-secondary)', color: '#f97316' }}>🟠 NG</option>
+              <option value="Neutral" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>⚪ Neutral</option>
             </select>
 
             {(filterEmiten || filterSector !== 'all' || filterStatus !== 'all') && (
